@@ -1,44 +1,58 @@
 import os
-
 from telegram import Update
-from telegram.ext import Application, MessageHandler, filters, ContextTypes, CommandHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
-
-
-# Get sensitive values from the environment
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-STORE_CHANNEL_ID = os.getenv("STORE_CHANNEL_ID")
+STORE_CHANNEL_ID = int(os.getenv("STORE_CHANNEL_ID"))
 MAIN_BOT_USERNAME = os.getenv("MAIN_BOT_USERNAME")
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Send me a file and I’ll create a link to download it!")
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
-
-    if not message.document and not message.video:
-        await message.reply_text("Please send or forward a document or video.")
+    if not message or not message.document and not message.video and not message.audio and not message.animation:
         return
 
-    # Forward to store room
-    sent_msg = await context.bot.copy_message(
+    waiting_msg = await message.reply_text("⏳ Uploading to store...")
+
+    sent = await context.bot.copy_message(
         chat_id=STORE_CHANNEL_ID,
-        from_chat_id=message.chat.id,
-        message_id=message.message_id
+        from_chat_id=message.chat_id,
+        message_id=message.message_id,
+        protect_content=True  # Prevent users from forwarding again
     )
 
-    msg_id = sent_msg.message_id
-    deep_link = f"https://t.me/{MAIN_BOT_USERNAME}?start={msg_id}"
+    file_id = sent.message_id
+    link = f"https://t.me/{MAIN_BOT_USERNAME}?start={file_id}"
 
-    await message.reply_text(f"✅ File saved in Store Room!\n\nHere’s your deep link:\n{deep_link}")
+    await waiting_msg.delete()
+    await message.reply_text(f"✅ File saved!\n🔗 [Click here to get it]({link})", parse_mode='Markdown')
 
-# Define main application
+async def serve_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.args:
+        try:
+            msg_id = int(context.args[0])
+            waiting = await update.message.reply_text("⏳ Getting file...")
+
+            file_msg = await context.bot.forward_message(
+                chat_id=update.message.chat_id,
+                from_chat_id=STORE_CHANNEL_ID,
+                message_id=msg_id
+            )
+
+            await waiting.delete()
+
+        except Exception as e:
+            await update.message.reply_text("❌ File not found or inaccessible.")
+    else:
+        await update.message.reply_text("❓ Invalid link or file ID.")
+
 def main():
-    app = Application.builder().token(BOT_TOKEN).build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(
-        filters.Document.ALL | filters.Type.VIDEO | filters.Type.AUDIO | filters.Type.ANIMATION,
-        handle_file
-    ))
+    app.add_handler(MessageHandler(filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL | filters.Animation.ALL, handle_file))
 
-    print("Uploader bot is running...")
     app.run_polling()
 
 if __name__ == "__main__":
