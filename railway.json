@@ -4,7 +4,7 @@
       "PYTHONUNBUFFERED": "1"
     }
   },
-  "deploy": {
-    "startCommand": "python auto_uploader_bot.py"
+  "start": {
+    "cmd": "python auto_uploader_bot.py"
   }
 }
