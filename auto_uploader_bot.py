@@ -50,10 +50,17 @@ async def serve_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL | filters.Animation.ALL, handle_file))
+    app.add_handler(
+        MessageHandler(
+            filters.Document.ALL | filters.Video | filters.Audio | filters.Animation,
+            handle_file
+        )
+    )
 
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
