@@ -1,6 +1,6 @@
 import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 STORE_CHANNEL_ID = int(os.getenv("STORE_CHANNEL_ID"))
