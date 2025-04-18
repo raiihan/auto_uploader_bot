@@ -1,6 +1,6 @@
 import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 STORE_CHANNEL_ID = int(os.getenv("STORE_CHANNEL_ID"))
@@ -9,13 +9,21 @@ MAIN_BOT_USERNAME = os.getenv("MAIN_BOT_USERNAME")
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Send me a file and I’ll create a link to download it!")
 
-async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+
+async def handle_file(update, context):
     message = update.message
     file = message.document or message.video or message.audio or message.animation
 
     if not file:
         await message.reply_text("❌ Unsupported file type.")
         return
+
+    # Proceed with your file handling logic here
+
+
+
+    
 
     waiting_msg = await message.reply_text("⏳ Uploading to store...")
 
@@ -53,12 +61,9 @@ async def serve_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❓ Invalid link or file ID.")
 
 def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
+    app = ApplicationBuilder().token("YOUR_BOT_TOKEN").build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
-    app.add_handler(CommandHandler("start", serve_file))
-
     app.run_polling()
 
 
