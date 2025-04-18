@@ -1,10 +1,9 @@
 import os
-from dotenv import load_dotenv
+
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes, CommandHandler
 
-# Load environment variables from .env
-load_dotenv()
+
 
 # Get sensitive values from the environment
 BOT_TOKEN = os.getenv("BOT_TOKEN")
