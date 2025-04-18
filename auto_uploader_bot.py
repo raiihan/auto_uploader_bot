@@ -39,7 +39,11 @@ async def main():
     app.add_handler(CommandHandler("start", start))
 
     # Add file handler for different file types (documents, videos, etc.)
-  application.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
+  application.add_handler(MessageHandler(
+    filters.Document.FILE | filters.Video | filters.Audio | filters.Animation,
+    handle_file
+)
+
 
 
     # Start the bot
