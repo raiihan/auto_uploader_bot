@@ -1,52 +1,49 @@
+# auto_uploader_bot.py
 import logging
 import os
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-from telegram.ext import ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 # Load environment variables
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-STORE_CHANNEL_ID = "-1002676143465"  # Your private store channel ID
+STORE_CHANNEL_ID = os.getenv("STORE_CHANNEL_ID")
 
-# Setup logging
-logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    level=logging.INFO)
+# Set up logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
-# Start command handler
+# /start command handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Welcome to the Auto Upload Bot!")
 
-# File handler
+# File upload handler
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    file = update.message.document or update.message.video or update.message.audio
+    file = update.message.document or update.message.video or update.message.audio or update.message.animation
     if file:
         file_id = file.file_id
-        # You can save or process the file here as per your need
-        await update.message.reply_text(f"Received file: {file.file_name}")
-        # Send the file back to users on request, or generate deep link if needed
+        file_name = file.file_name or "Unnamed file"
+        await update.message.reply_text(f"Received file: {file_name}\nFile ID: {file_id}")
+        # TODO: forward to STORE_CHANNEL_ID or generate deep link
     else:
-        await update.message.reply_text("Sorry, I could not process that.")
+        await update.message.reply_text("Unsupported file type or empty message.")
 
-# Main function to set up the bot
+# Main bot setup
 async def main():
-    # Create application
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Add command handler
+    # Register handlers
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(
+        filters.VIDEO | filters.DOCUMENT | filters.AUDIO | filters.ANIMATION,
+        handle_file
+    ))
 
-    # Add file handler for different file types (documents, videos, etc.)
-  application.add_handler(MessageHandler(
-    filters.Document.FILE | filters.Video | filters.Audio | filters.Animation,
-    handle_file
-)
-
-
-
-    # Start the bot
+    # Start polling
     await app.run_polling()
 
 if __name__ == "__main__":
