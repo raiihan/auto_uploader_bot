@@ -11,7 +11,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
-    if not message or not message.document and not message.video and not message.audio and not message.animation:
+    file = message.document or message.video or message.audio or message.animation
+
+    if not file:
+        await message.reply_text("❌ Unsupported file type.")
         return
 
     waiting_msg = await message.reply_text("⏳ Uploading to store...")
@@ -20,7 +23,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id=STORE_CHANNEL_ID,
         from_chat_id=message.chat_id,
         message_id=message.message_id,
-        protect_content=True  # Prevent users from forwarding again
+        protect_content=True
     )
 
     file_id = sent.message_id
@@ -28,6 +31,7 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await waiting_msg.delete()
     await message.reply_text(f"✅ File saved!\n🔗 [Click here to get it]({link})", parse_mode='Markdown')
+
 
 async def serve_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:
@@ -52,14 +56,11 @@ def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(
-        MessageHandler(
-            filters.Document.ALL | filters.Video | filters.Audio | filters.Animation,
-            handle_file
-        )
-    )
+    app.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
+    app.add_handler(CommandHandler("start", serve_file))
 
     app.run_polling()
+
 
 
 if __name__ == "__main__":
