@@ -39,7 +39,8 @@ async def main():
     app.add_handler(CommandHandler("start", start))
 
     # Add file handler for different file types (documents, videos, etc.)
-    app.add_handler(MessageHandler(filters.Document.ALL | filters.Video.ALL | filters.Audio.ALL | filters.Animation.ALL, handle_file))
+  application.add_handler(MessageHandler(filters.ATTACHMENT, handle_file))
+
 
     # Start the bot
     await app.run_polling()
